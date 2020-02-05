@@ -20,11 +20,11 @@ type Calendar struct {
 }
 
 type CalendarRequest struct {
-	Name       string `json:"name"`
-	Active     bool   `json:"active"`
-	Color      int    `json:"color"`
-	Overlap    bool   `json:"overlap"`
-	Attributes string `json:"attributes"`
+	Name       *string `json:"name"`
+	Active     *bool   `json:"active"`
+	Color      *int    `json:"color"`
+	Overlap    *bool   `json:"overlap"`
+	Attributes *string `json:"attributes"`
 }
 
 // insert into calendar(id, name, active, color, overlap, attributes, location) values ('123', 'sailesh', 1, 4, 0, "dsfs", "delhi")
@@ -48,10 +48,17 @@ func getCalendar(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Calendar(calendar))
 }
 
+func checkFunc(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	fmt.Println(" ID is ", params["cid"])
+	fmt.Println("CID is ", params["id"])
+}
+
 func main() {
 	currentTime := time.Now()
 	fmt.Println("Current date is ", currentTime)
 	r := mux.NewRouter()
+	r.HandleFunc("/{cid}/calendar/{id}", checkFunc).Methods("GET")
 	r.HandleFunc("/api/calendar/{id}", getCalendar).Methods("GET")
 	r.HandleFunc("/api/calendar", CreateCalendar).Methods("POST")
 	r.HandleFunc("/api/calendar/{id}", DeleteCalendar).Methods("DELETE")
