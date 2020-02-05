@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -12,31 +14,69 @@ import (
 )
 
 type Calendar struct {
-	Active      bool      `json:"active"`
-	Color       int       `json:"color"`
-	Overlap     bool      `json:"overlap"`
-	Attributes  []string  `json:"attributes"`
 	Creation_dt time.Time `json:"creation_dt"`
-	Name        string    `json:"name"`
 	Location    string    `json:"location"`
 	Update_dt   time.Time `json:"update_dt"`
 	Id          string    `json:"id"`
+	CalendarRequest
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("THIS IS GOOD")
+type CalendarRequest struct {
+	Name       string `json:"name"`
+	Active     bool   `json:"active"`
+	Color      int    `json:"color"`
+	Overlap    bool   `json:"overlap"`
+	Attributes string `json:"attributes"`
+}
+
+// insert into calendar(id, name, active, color, overlap, attributes, location) values ('123', 'sailesh', 1, 4, 0, "dsfs", "delhi")
+
+// Returns an int >= min, < max
+func randomInt(min, max int) int {
+	return min + rand.Intn(max-min)
+}
+
+func getCalendar(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	fmt.Println("Params are ", params)
+	id := params["id"]
+	dbConn := ConnectDb()
+	var calendar Calendar
+	row := dbConn.QueryRowx("SELECT name, id, active, location, color FROM calendar where id =?", id)
+	fmt.Println(row)
+	err := row.StructScan(&calendar)
+	if err != nil {
+		panic(err.Error())
+	}
+	json.NewEncoder(w).Encode(Calendar(calendar))
 }
 
 func createCalendar(w http.ResponseWriter, r *http.Request) {
+
+	dbConn := ConnectDb()
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	var calendar Calendar
+	var calendar CalendarRequest
 	err := json.Unmarshal(reqBody, &calendar)
 	fmt.Println("Error is ", err)
 	fmt.Println("Calendar is ", calendar)
+	id := strconv.Itoa(randomInt(10000, 99999))
+	name := calendar.Name
+	active := calendar.Active
+	color := calendar.Color
+	overlap := (calendar.Overlap)
+	attributes := calendar.Attributes
+	location := "Dehradun"
 
-	json.NewEncoder(w).Encode(Calendar(calendar))
+	stmtIns, err := dbConn.Prepare("INSERT INTO calendar(id, name, active, color, overlap, attributes, location) VALUES (?, ?, ?, ?, ?, ?, ?) ")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmtIns.Close()
+
+	_, err = stmtIns.Exec(id, name, active, color, overlap, attributes, location)
+	if err != nil {
+		panic(err.Error())
+	}
+	json.NewEncoder(w).Encode(CalendarRequest(calendar))
 	fmt.Println("Data is ", calendar)
 }
 
@@ -44,7 +84,7 @@ func main() {
 	currentTime := time.Now()
 	fmt.Println("Current date is ", currentTime)
 	r := mux.NewRouter()
-	r.HandleFunc("/articles/{id}", handler).Methods("GET")
+	r.HandleFunc("/api/calendar/{id}", getCalendar).Methods("GET")
 	r.HandleFunc("/api/calendar", createCalendar).Methods("POST")
 	http.ListenAndServe(":8080", r)
 }
