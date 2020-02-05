@@ -3,10 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -50,41 +48,13 @@ func getCalendar(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Calendar(calendar))
 }
 
-func createCalendar(w http.ResponseWriter, r *http.Request) {
-
-	dbConn := ConnectDb()
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var calendar CalendarRequest
-	err := json.Unmarshal(reqBody, &calendar)
-	fmt.Println("Error is ", err)
-	fmt.Println("Calendar is ", calendar)
-	id := strconv.Itoa(randomInt(10000, 99999))
-	name := calendar.Name
-	active := calendar.Active
-	color := calendar.Color
-	overlap := (calendar.Overlap)
-	attributes := calendar.Attributes
-	location := "Dehradun"
-
-	stmtIns, err := dbConn.Prepare("INSERT INTO calendar(id, name, active, color, overlap, attributes, location) VALUES (?, ?, ?, ?, ?, ?, ?) ")
-	if err != nil {
-		panic(err.Error())
-	}
-	defer stmtIns.Close()
-
-	_, err = stmtIns.Exec(id, name, active, color, overlap, attributes, location)
-	if err != nil {
-		panic(err.Error())
-	}
-	json.NewEncoder(w).Encode(CalendarRequest(calendar))
-	fmt.Println("Data is ", calendar)
-}
-
 func main() {
 	currentTime := time.Now()
 	fmt.Println("Current date is ", currentTime)
 	r := mux.NewRouter()
 	r.HandleFunc("/api/calendar/{id}", getCalendar).Methods("GET")
-	r.HandleFunc("/api/calendar", createCalendar).Methods("POST")
+	r.HandleFunc("/api/calendar", CreateCalendar).Methods("POST")
+	r.HandleFunc("/api/calendar/{id}", DeleteCalendar).Methods("DELETE")
+	r.HandleFunc("/api/calendar/{id}", PatchCalendar).Methods("PATCH")
 	http.ListenAndServe(":8080", r)
 }
