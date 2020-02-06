@@ -11,10 +11,6 @@ import (
 	"time"
 )
 
-type ErrorStruct struct {
-	isError     bool
-	ErrorString string
-}
 
 func (calendar *CalendarRequest) validate() (err ErrorStruct) {
 
