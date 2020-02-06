@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"strconv"
+	"sync"
 	"time"
 )
 
@@ -52,16 +54,23 @@ func (calendar *CalendarRequest) validate() (err ErrorStruct) {
 
 }
 
+func getImageUrl() string {
+	resp, _ := http.Get("https://source.unsplash.com/random")
+	return resp.Request.URL.String()
+}
+
 func CreateCalendar(w http.ResponseWriter, r *http.Request) {
 
-	// dbConn := ConnectDb()
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	ch := make(chan string)
+	go func() { ch <- getImageUrl() }()
+	dbConn := ConnectDb()
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var calendar CalendarRequest
-	fmt.Println("calnedar is ", calendar)
+
 	err := json.Unmarshal(reqBody, &calendar)
-	fmt.Println("Error is ", err)
-	fmt.Println("Calendar is ", (calendar))
-	fmt.Println("And is ", calendar.Name)
+
 	rand.Seed(time.Now().UTC().UnixNano())
 	validationErr := calendar.validate()
 	if validationErr.isError == true {
@@ -69,25 +78,34 @@ func CreateCalendar(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	// id := strconv.Itoa(randomInt(10000, 99999))
-	// name := calendar.Name
-	// active := calendar.Active
-	// color := calendar.Color
-	// overlap := (calendar.Overlap)
-	// attributes := calendar.Attributes
-	// location := "Dehradun"
+	id := strconv.Itoa(randomInt(10000, 99999))
+	name := calendar.Name
+	active := calendar.Active
+	color := calendar.Color
+	overlap := (calendar.Overlap)
+	attributes := calendar.Attributes
+	location := "Dehradun"
 
-	// stmtIns, err := dbConn.Prepare("INSERT INTO calendar(id, name, active, color, overlap, attributes, location) VALUES (?, ?, ?, ?, ?, ?, ?) ")
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// defer stmtIns.Close()
+	currentDate := time.Now()
+	creation_dt := currentDate.Format("2006-01-02 15:04:05")
+	update_dt := currentDate.Format("2006-01-02 15:04:05")
+	stmtIns, err := dbConn.Prepare("INSERT INTO calendar(id, name, active, color, overlap, attributes, location, creation_dt, update_dt, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmtIns.Close()
 
-	// _, err = stmtIns.Exec(id, name, active, color, overlap, attributes, location)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// w.WriteHeader(201)
-	// json.NewEncoder(w).Encode(CalendarRequest(calendar))
-	fmt.Println("Data is ", calendar)
+	_, err = stmtIns.Exec(id, name, active, color, overlap, attributes, location, creation_dt, update_dt, <-ch)
+	wg.Done()
+	if err != nil {
+		panic(err.Error())
+	}
+	w.WriteHeader(201)
+	var createdCalendar CalendarRequest
+	row := dbConn.QueryRowx("SELECT * FROM calendar where id =?", id)
+	err = row.StructScan(&createdCalendar)
+	if err != nil {
+		panic(err.Error())
+	}
+	json.NewEncoder(w).Encode(CalendarRequest(createdCalendar))
 }

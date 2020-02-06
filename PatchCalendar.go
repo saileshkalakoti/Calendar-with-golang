@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -12,27 +12,31 @@ import (
 func PatchCalendar(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
+
 	dbConn := ConnectDb()
 
 	reqBody, _ := ioutil.ReadAll(r.Body)
+
 	var calendar CalendarRequest
+
 	err := json.Unmarshal(reqBody, &calendar)
-	fmt.Println("Error is ", err)
-	fmt.Println("Calendar is ", calendar)
+
 	name := calendar.Name
 	active := calendar.Active
 	color := calendar.Color
 	overlap := (calendar.Overlap)
 	attributes := calendar.Attributes
-	// location := "Dehradun"
-	res := dbConn.MustExec("UPDATE calendar SET name=?, active=?, color=?, overlap=?, attributes=? WHERE id=?", name, active, color, overlap, attributes, id)
+
+	currentDate := time.Now()
+	update_dt := currentDate.Format("2006-01-02 15:04:05")
+
+	res := dbConn.MustExec("UPDATE calendar SET name=?, active=?, color=?, overlap=?, attributes=?, update_dt=? WHERE id=?", name, active, color, overlap, attributes, update_dt, id)
 	count, err := res.RowsAffected()
 	if err != nil {
-		panic(err.Error)
+		w.WriteHeader(500)
 	}
 	if count == 1 {
-		row := dbConn.QueryRowx("SELECT name, id, active, location, color FROM calendar where id =?", id)
-		// fmt.Println(row)
+		row := dbConn.QueryRowx("SELECT * FROM calendar where id =?", id)
 		_ = row.StructScan(&calendar)
 
 		w.WriteHeader(200)
