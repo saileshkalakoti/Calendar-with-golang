@@ -51,12 +51,6 @@ func randomInt(min, max int) int {
 	return min + rand.Intn(max-min)
 }
 
-func checkFunc(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	fmt.Println(" ID is ", params["cid"])
-	fmt.Println("CID is ", params["id"])
-}
-
 func main() {
 	currentTime := time.Now()
 	fmt.Println("Current date is ", currentTime.Format("2006-01-02 15:04:05"))
@@ -67,6 +61,7 @@ func main() {
 	r.HandleFunc("/api/calendar/{id}", DeleteCalendar).Methods("DELETE")
 	r.HandleFunc("/api/calendar/{id}", PatchCalendar).Methods("PATCH")
 	r.HandleFunc("/{calendarId}/events", CreateEvent).Methods("POST")
-	r.HandleFunc("/{cid}/calendar/{id}", checkFunc).Methods("GET")
+	r.HandleFunc("/{calendarId}/events/{eventId}", GetEvent).Methods("GET")
+	r.HandleFunc("/{calendarId}/events", GetEventRange).Methods("GET")
 	http.ListenAndServe(":8080", r)
 }
