@@ -51,11 +51,16 @@ func randomInt(min, max int) int {
 	return min + rand.Intn(max-min)
 }
 
+func Welcome(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello World"))
+}
+
 func main() {
 	currentTime := time.Now()
 	fmt.Println("Current date is ", currentTime.Format("2006-01-02 15:04:05"))
 
 	r := mux.NewRouter()
+	r.HandleFunc("/", Welcome).Methods("GET")
 	r.HandleFunc("/api/calendar/{id}", GetCalendar).Methods("GET")
 	r.HandleFunc("/api/calendar", CreateCalendar).Methods("POST")
 	r.HandleFunc("/api/calendar/{id}", DeleteCalendar).Methods("DELETE")
