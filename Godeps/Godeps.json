@@ -1,0 +1,27 @@
+{
+	"ImportPath": "github.com/saileshkalakoti/Calendar-with-golang",
+	"GoVersion": "go1.12",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.5.0",
+			"Rev": "17ef3dd9d98b69acec3e85878995ada9533a9370"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.7.3-16-g75dcda0",
+			"Rev": "75dcda0896e109a2a22c9315bca3bb21b87b2ba5"
+		},
+		{
+			"ImportPath": "github.com/jmoiron/sqlx",
+			"Comment": "v1.2.0-26-g2ba0fc6",
+			"Rev": "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
+		},
+		{
+			"ImportPath": "github.com/jmoiron/sqlx/reflectx",
+			"Comment": "v1.2.0-26-g2ba0fc6",
+			"Rev": "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
+		}
+	]
+}
