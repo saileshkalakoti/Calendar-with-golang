@@ -50,6 +50,9 @@ type ErrorStruct struct {
 func randomInt(min, max int) int {
 	return min + rand.Intn(max-min)
 }
+func Welcome(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello World"))
+}
 
 func Welcome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello World"))
