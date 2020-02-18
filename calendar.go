@@ -54,10 +54,6 @@ func Welcome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello World"))
 }
 
-func Welcome(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
-}
-
 func main() {
 	currentTime := time.Now()
 	fmt.Println("Current date is ", currentTime.Format("2006-01-02 15:04:05"))
